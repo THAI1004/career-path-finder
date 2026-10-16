@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   GraduationCap,
   Sparkles,
@@ -26,8 +26,12 @@ import { DiscHollandGuide } from './components/DiscHollandGuide.tsx';
 
 import { useStudentFlow } from './useStudentFlow.ts';
 import { AdminPanel } from './components/AdminPanel.tsx';
+import { AuthPanel } from './components/AuthPanel.tsx';
+import { useAuth } from './platform.tsx';
 
 export default function App() {
+  const { user, logout } = useAuth();
+  const [showProfile, setShowProfile] = useState(false);
   const {
     CAREER_MATRIX_DATA, UNIVERSITY_MAJORS_LIST, activeTab, setActiveTab,
     selectedInitialMajor, selectedRevisedMajor, studentName, setStudentName,
@@ -44,6 +48,7 @@ export default function App() {
     setAssessmentTier, setAssessmentMode
   } = useStudentFlow();
 
+  if (!user) return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4"><AuthPanel /></div>;
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800">
       {/* Top Navigation */}
@@ -51,10 +56,14 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         historyCount={history.length}
+        isAdmin={user.role === 'admin'}
+        userName={user.name}
+        onProfile={() => setShowProfile(value => !value)}
       />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+        {showProfile && <AuthPanel />}
         {/* TAB 1: TƯ VẤN & LÀM BÀI TEST */}
         {activeTab === 'admin' && <AdminPanel />}
         {error && <p role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</p>}

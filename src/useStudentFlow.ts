@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, useCareerData } from './platform.tsx';
+import { api, useAuth, useCareerData } from './platform.tsx';
 import { getQuestionsByConfig } from './data/questionBank.ts';
 import type { AssessmentMode, AssessmentTier, AssessmentStatus, CareerMatrixItem, EvaluationResult, TestAnswers, UniversityMajor } from './types/career.ts';
 import type { Attempt, StoredResult, Student } from './types/platform.ts';
@@ -8,11 +8,12 @@ const profileKey = 'educareer_student_id';
 function readProfileId() { try { return localStorage.getItem(profileKey) || ''; } catch { return ''; } }
 const emptyMajor: UniversityMajor = {id:'',name:'',code:'',category:'',typicalHolland:'R',description:'',careerOutcomes:[]};
 export function useStudentFlow() {
+  const { user } = useAuth();
   const { UNIVERSITY_MAJORS_LIST, CAREER_MATRIX_DATA } = useCareerData();
   const [activeTab,setActiveTab]=useState<'counseling'|'matrix'|'history'|'guide'|'admin'>('counseling');
   const [selectedInitialMajor,setSelectedInitialMajor]=useState<UniversityMajor>(UNIVERSITY_MAJORS_LIST[0]||emptyMajor);
   const [selectedRevisedMajor,setSelectedRevisedMajor]=useState<UniversityMajor>(UNIVERSITY_MAJORS_LIST[0]||emptyMajor);
-  const [studentId,setStudentId]=useState(readProfileId);
+  const [studentId,setStudentId]=useState(user?.id || readProfileId);
   const [studentName,setStudentName]=useState(''); const [school,setSchool]=useState(''); const [className,setClassName]=useState('');
   const [studentActive,setStudentActive]=useState(true);
   const [profileReady,setProfileReady]=useState(false);
@@ -31,15 +32,10 @@ export function useStudentFlow() {
   const queue=useRef<Promise<unknown>>(Promise.resolve());
   const activeQuestions=attempt?.questions || getQuestionsByConfig(assessmentMode,assessmentTier);
   useEffect(()=>{
-    let cancelled=false;
-    api<Student[]>('/api/students').then(students=>{
-      if(cancelled)return;
-      const student=students.find(s=>s.id===readProfileId());
-      if(student){setStudentId(student.id);setStudentName(student.name);setSchool(student.school);setClassName(student.className);setStudentActive(student.active);}
-      else {setStudentId('');try{localStorage.removeItem(profileKey);}catch{}}
-    }).catch(e=>{if(!cancelled)setError(e.message);}).finally(()=>{if(!cancelled)setProfileReady(true);});
-    return()=>{cancelled=true;};
-  },[]);
+    if (!user) return;
+    setStudentId(user.id); setStudentName(user.name); setStudentActive(user.active); setProfileReady(true);
+    try { localStorage.setItem(profileKey, user.id); } catch {}
+  },[user]);
   useEffect(()=>{
     if(!studentId){setHistory([]);return;}
     let cancelled=false;

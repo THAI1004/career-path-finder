@@ -8,6 +8,28 @@ export interface Student {
   className: string;
   createdAt: string;
 }
+export type UserRole = 'user' | 'admin';
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  name: string;
+  phone: string;
+  coverUrl: string;
+  active: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+  /** Server-only credential hash; never returned by the API. */
+  passwordHash?: string;
+}
+export interface AuthUser extends User {}
+export interface QuestionBankRecord {
+  id: number;
+  type: 'DISC' | 'HOLLAND';
+  title: string;
+  scenario: string;
+  options: Array<{ id: string; text: string; trait: string; weight: number }>;
+}
 export interface Group { id: string; name: string; description: string; active: boolean }
 export interface Job { id: string; name: string; description: string; keySkills: string[]; suitableRoles: string[]; topUniversities: string[]; averageSalaryRange: string; growthPotential: CareerMatrixItem['growthPotential']; active: boolean }
 export interface Major extends UniversityMajor { active: boolean }

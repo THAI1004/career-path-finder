@@ -70,9 +70,13 @@ export function validateCatalog(c: Catalog) {
     list(o.combinationIds, 'Tổ hợp'); requireValue(o.combinationIds.length && o.combinationIds.every(id => c.combinations.some(x => x.id === id)), 'Tổ hợp của đầu ra không tồn tại.');
   }
 }
-export function questionsFor(_c: PublicCatalog, mode: Attempt['mode'], tier: Attempt['tier']) {
+export function questionsFor(_c: PublicCatalog, mode: Attempt['mode'], tier: Attempt['tier'], banks?: { DISC: any[]; HOLLAND: any[] }) {
   requireValue(['INTEGRATED','DISC','HOLLAND'].includes(mode) && ['short','standard','deep'].includes(tier), 'Cấu hình bài test không hợp lệ.');
-  return getQuestionsByConfig(mode,tier);
+  if (!banks) return getQuestionsByConfig(mode,tier);
+  const count = tier === 'short' ? 20 : tier === 'standard' ? 50 : 70;
+  if (mode === 'DISC') return structuredClone(banks.DISC.slice(0, count));
+  if (mode === 'HOLLAND') return structuredClone(banks.HOLLAND.slice(0, count));
+  const half = Math.floor(count / 2); return structuredClone([...banks.DISC.slice(0, half), ...banks.HOLLAND.slice(0, half)]);
 }
 
 export function validateAnswers(attempt: Attempt, answers: any, complete = false) {
