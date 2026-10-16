@@ -49,7 +49,7 @@ export default function App() {
     setAssessmentTier, setAssessmentMode
   } = useStudentFlow();
 
-  if (showProfile && user) return <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800"><Header activeTab={activeTab} setActiveTab={setActiveTab} historyCount={history.length} isAdmin={user.role === 'admin'} userName={user.name} userAvatar={user.coverUrl} onProfile={() => setShowProfile(false)} onLogin={() => setShowProfile(false)}/><main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><AuthPanel /></main></div>;
+  if (showProfile && user) return <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800"><Header activeTab={activeTab} setActiveTab={tab=>{setShowProfile(false);setActiveTab(tab);}} historyCount={history.length} isAdmin={user.role === 'admin'} userName={user.name} userAvatar={user.coverUrl} onProfile={() => setShowProfile(false)} onLogin={() => setShowProfile(false)}/><main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><AuthPanel /></main></div>;
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800">
       {/* Top Navigation */}
