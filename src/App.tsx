@@ -32,6 +32,7 @@ import { useAuth } from './platform.tsx';
 export default function App() {
   const { user, logout } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const {
     CAREER_MATRIX_DATA, UNIVERSITY_MAJORS_LIST, activeTab, setActiveTab,
     selectedInitialMajor, selectedRevisedMajor, studentName, setStudentName,
@@ -48,7 +49,6 @@ export default function App() {
     setAssessmentTier, setAssessmentMode
   } = useStudentFlow();
 
-  if (!user) return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4"><AuthPanel /></div>;
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-800">
       {/* Top Navigation */}
@@ -56,19 +56,22 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         historyCount={history.length}
-        isAdmin={user.role === 'admin'}
-        userName={user.name}
+        isAdmin={user?.role === 'admin'}
+        userName={user?.name}
         onProfile={() => setShowProfile(value => !value)}
+        onLogin={() => setShowLogin(true)}
       />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
-        {showProfile && <AuthPanel />}
+        {showProfile && user && <AuthPanel />}
+        {!user && showLogin && <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4"><div className="relative w-full max-w-md"><button onClick={()=>setShowLogin(false)} className="absolute right-3 top-3 z-10 text-slate-500 text-xl" aria-label="Đóng đăng nhập">×</button><AuthPanel /></div></div>}
+        {!user && <section className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 text-center shadow-sm"><div className="mx-auto w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl font-black">E</div><h1 className="mt-5 text-3xl sm:text-4xl font-extrabold text-slate-900">Khám phá bản thân cùng EduCareer</h1><p className="mt-3 max-w-2xl mx-auto text-slate-600">Xem ma trận nghề nghiệp, cẩm nang DISC & Holland và đăng nhập khi bạn muốn làm bài test, lưu lịch sử hoặc nhận báo cáo cá nhân.</p><div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={()=>setShowLogin(true)} className="px-5 py-3 rounded-xl bg-blue-600 text-white font-bold">Đăng nhập để làm bài</button><button onClick={()=>setActiveTab('matrix')} className="px-5 py-3 rounded-xl border border-slate-300 font-bold text-slate-700">Xem ma trận nghề nghiệp</button><button onClick={()=>setActiveTab('guide')} className="px-5 py-3 rounded-xl border border-slate-300 font-bold text-slate-700">Đọc cẩm nang</button></div><div className="grid sm:grid-cols-3 gap-4 mt-10 text-left"><div className="p-4 rounded-2xl bg-blue-50"><b>DISC</b><p className="text-sm text-slate-600 mt-1">Nhận diện phong cách hành vi.</p></div><div className="p-4 rounded-2xl bg-emerald-50"><b>Holland RIASEC</b><p className="text-sm text-slate-600 mt-1">Khám phá nhóm sở thích nghề nghiệp.</p></div><div className="p-4 rounded-2xl bg-amber-50"><b>Báo cáo 2026</b><p className="text-sm text-slate-600 mt-1">Gợi ý ngành học, nghề và tổ hợp tham khảo.</p></div></div></section>}
         {/* TAB 1: TƯ VẤN & LÀM BÀI TEST */}
         {activeTab === 'admin' && <AdminPanel />}
         {error && <p role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</p>}
         {busy && <p role="status" className="text-sm text-blue-700">Đang lưu dữ liệu…</p>}
-        {activeTab === 'counseling' && (
+        {user && activeTab === 'counseling' && (
           <div className="space-y-8">
             <section className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6">
               <h2 className="font-bold text-lg mb-2">Thông tin sinh viên</h2>
