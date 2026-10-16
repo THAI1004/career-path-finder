@@ -5,6 +5,7 @@ import { createApp } from './app.ts';
 import { Store } from './store.ts';
 
 const store = new Store(path.resolve(process.env.DATA_FILE || 'data/platform.json'));
+await store.ready;
 const app = createApp(store);
 if (process.env.NODE_ENV === 'production' || process.argv.includes('--production')) {
   app.use(express.static(path.resolve('dist')));

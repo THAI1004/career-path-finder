@@ -1,5 +1,6 @@
 import express from 'express';
 import { randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { OAuth2Client } from 'google-auth-library';
 import type { Store } from './store.ts';
 import { collections, evaluate, HttpError, publicCatalog, questionsFor, requireValue, subjectPlanFor, validateAnswers, validateCatalog } from './domain.ts';
 import type { Collection, Student, Attempt, User } from '../src/types/platform.ts';
@@ -12,6 +13,7 @@ const safeUser = (user: StoredUser): User => { const { passwordHash: _passwordHa
 
 export function createApp(store: Store) {
   const app = express();
+  const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID) : null;
   if (!store.data.users.length) {
     const now = new Date().toISOString();
     store.data.users.push({ id: randomUUID(), email: 'admin@educareer.local', passwordHash: hashPassword('Admin@123'), role: 'admin', name: 'Quản trị viên', phone: '', coverUrl: '', active: true, createdAt: now });
@@ -49,6 +51,7 @@ export function createApp(store: Store) {
     const email = String(req.body?.email || '').trim().toLowerCase(); const password = String(req.body?.password || ''); const user = (store.data.users as StoredUser[]).find(item => item.email === email);
     requireValue(user && user.active && passwordMatches(password, user.passwordHash), 'Email hoặc mật khẩu không đúng.', 401); user.lastLoginAt = new Date().toISOString(); store.save(); const token = randomUUID(); sessions.set(token, user.id); res.json({ token, user: safeUser(user) });
   });
+  app.post('/api/auth/google', async (req,res,next) => { try { requireValue(!!googleClient, 'Chưa cấu hình Google OAuth.'); const credential = String(req.body?.credential || ''); requireValue(credential.length > 20, 'Thiếu thông tin xác thực Google.'); const ticket = await googleClient!.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID }); const payload = ticket.getPayload(); requireValue(!!payload?.email && payload.email_verified !== false, 'Email Google chưa được xác minh.'); const email = payload!.email!.toLowerCase(); let user = (store.data.users as StoredUser[]).find(item => item.email.toLowerCase() === email); if (!user) { const isAdmin = (process.env.ADMIN_EMAILS || '').split(',').map(x=>x.trim().toLowerCase()).includes(email); const now = new Date().toISOString(); user = { id: randomUUID(), email, passwordHash: hashPassword(randomUUID()), role: isAdmin ? 'admin' : 'user', name: payload!.name || email.split('@')[0], phone: '', coverUrl: '', active: true, createdAt: now }; store.data.users.push(user); store.data.students.push({ id:user.id, name:user.name, school:'', className:'', active:true, createdAt:now }); store.save(); } requireValue(user.active, 'Tài khoản đã bị khóa.', 403); user.lastLoginAt = new Date().toISOString(); store.save(); const token = randomUUID(); sessions.set(token,user.id); res.json({ token, user:safeUser(user) }); } catch (error) { next(error); } });
   app.get('/api/auth/me', (req,res) => { const user = currentUser(req); if (!user) return res.status(401).json({ error: 'Chưa đăng nhập.' }); res.json(safeUser(user)); });
   app.post('/api/auth/logout', (req,res) => { const token = String(req.headers.authorization || '').replace(/^Bearer /, ''); if (token) sessions.delete(token); res.json({ ok: true }); });
   app.put('/api/auth/profile', (req,res) => { const user = requireAuth(req); const body = req.body || {}; if (body.name !== undefined) requireValue(typeof body.name === 'string' && body.name.trim().length > 0 && body.name.length <= 150, 'Họ tên không hợp lệ.'); if (body.phone !== undefined) requireValue(typeof body.phone === 'string' && body.phone.length <= 50, 'Số điện thoại không hợp lệ.'); if (body.coverUrl !== undefined) requireValue(typeof body.coverUrl === 'string' && body.coverUrl.length <= 2200000, 'Ảnh bìa không hợp lệ hoặc quá lớn.'); Object.assign(user, { name: body.name?.trim() ?? user.name, phone: body.phone ?? user.phone, coverUrl: body.coverUrl ?? user.coverUrl }); const student = store.data.students.find(item => item.id === user.id); if (student) student.name = user.name; store.save(); res.json(safeUser(user)); });
