@@ -52,3 +52,6 @@
 .admin-shell button, .question-bank button, .user-manager button, .admin-shell select, .question-bank select, .user-manager select {
   cursor: pointer;
 }
+
+.admin-shell > .flex-1 > section, .user-manager, .question-bank { border: 0 !important; box-shadow: 0 4px 18px rgba(15,23,42,.05); }
+.admin-shell .border, .user-manager .border, .question-bank .border { border-color: #edf2f7 !important; }
