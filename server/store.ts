@@ -34,11 +34,16 @@ export class Store {
   private async initDatabase() {
     const url = process.env.DATABASE_URL;
     if (!url) return;
-    this.pool = new Pool({ connectionString: url, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
-    await this.pool.query('CREATE TABLE IF NOT EXISTS educareer_state (id INTEGER PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
-    const found = await this.pool.query('SELECT data FROM educareer_state WHERE id=1');
-    if (found.rows[0]?.data) { this.data = found.rows[0].data as Database; this.committed = structuredClone(this.data); }
-    else await this.pool.query('INSERT INTO educareer_state (id,data) VALUES (1,$1) ON CONFLICT (id) DO NOTHING', [this.data]);
+    try {
+      this.pool = new Pool({ connectionString: url, connectionTimeoutMillis: 5000, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
+      await this.pool.query('CREATE TABLE IF NOT EXISTS educareer_state (id INTEGER PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
+      const found = await this.pool.query('SELECT data FROM educareer_state WHERE id=1');
+      if (found.rows[0]?.data) { this.data = found.rows[0].data as Database; this.committed = structuredClone(this.data); }
+      else await this.pool.query('INSERT INTO educareer_state (id,data) VALUES (1,$1) ON CONFLICT (id) DO NOTHING', [this.data]);
+    } catch (error) {
+      console.warn('EduCareer: không kết nối được PostgreSQL, dùng dữ liệu local tạm thời.', (error as Error).message);
+      await this.pool?.end().catch(() => {}); this.pool = null;
+    }
   }
   save() {
     try {
