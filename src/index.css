@@ -37,3 +37,18 @@
     display: block !important;
   }
 }
+
+.admin-shell select, .question-bank select, .user-manager select {
+  border: 1px solid #e6edf6 !important;
+  box-shadow: none !important;
+  background-color: #fff !important;
+}
+.admin-shell table, .question-bank table, .user-manager table {
+  border: 0 !important;
+}
+.admin-shell th, .admin-shell td, .question-bank th, .question-bank td, .user-manager th, .user-manager td {
+  border-color: #edf2f7 !important;
+}
+.admin-shell button, .question-bank button, .user-manager button, .admin-shell select, .question-bank select, .user-manager select {
+  cursor: pointer;
+}
