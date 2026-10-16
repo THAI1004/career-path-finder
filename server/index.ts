@@ -15,4 +15,6 @@ if (process.env.NODE_ENV === 'production' || process.argv.includes('--production
   app.use(vite.middlewares);
 }
 const port = Number(process.env.PORT || 3000);
-app.listen(port, process.env.HOST || '127.0.0.1', () => console.log(`EduCareer: http://localhost:${port}`));
+// Render and other container hosts require binding to all interfaces.
+// Local development still remains available at http://localhost:<port>.
+app.listen(port, process.env.HOST || '0.0.0.0', () => console.log(`EduCareer: http://localhost:${port}`));

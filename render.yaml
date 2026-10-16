@@ -11,3 +11,5 @@ services:
         value: production
       - key: DATA_FILE
         value: /tmp/educareer-platform.json
+      - key: HOST
+        value: 0.0.0.0
